@@ -5,6 +5,7 @@ import tkFileDialog
 import sys
 import os
 import string
+import subprocess
 
 from Tkinter import *
 from os import path, access, R_OK, W_OK
@@ -97,6 +98,27 @@ def test_forces():
     sys.stdout = original_stdout  # restore STDOUT back to its original value
     tkMessageBox.showinfo("G2G_GUI Message", "File '%s' created" % (Output_name.get()))
 
+
+def show_gerber():
+
+  if not os.path.exists(Gerber_name.get()):
+    get_input_filename()
+  if not os.path.exists(Gerber_name.get()):
+    tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for the input Gerber file is invalid.")
+    return
+
+  head, tail = os.path.split(Gerber_name.get())
+
+  if os.name == 'nt':
+    if not os.path.exists(gerbv_path.get()):
+      tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for gerbv is invalid.")
+      return
+
+    if not os.path.exists(pstoedit_path.get()):
+      tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for pstoedit is invalid.")
+      return
+
+  subprocess.Popen([os.path.normpath(gerbv_path.get()), os.path.normpath(Gerber_name.get())])
 
 def main_program():
   #
@@ -330,10 +352,11 @@ else:
   Label(top, text="Cutter Device Name").grid(row=11, column=0, sticky=W)
 Entry(top, bd =1, width=60, textvariable=cutter_shared_name_str).grid(row=11, column=1, sticky=E)
 
-Tkinter.Button(top, width=40, text = "Create Graphtec File from Gerber", command = main_program).grid(row=12, column=1)
-Tkinter.Button(top, width=40, text = "Send Graphtec File to Silhouette Cutter", command = Send_to_Cutter).grid(row=13, column=1)
-Tkinter.Button(top, width=40, text = "Save Configuration", command = Save_Configuration).grid(row=14, column=1)
-Tkinter.Button(top, width=40, text = "Exit", command = Just_Exit).grid(row=15, column=1)
+Tkinter.Button(top, width=40, text="Show Gerber in Gerbv", command=show_gerber).grid(row=12, column=1)
+Tkinter.Button(top, width=40, text="Create Graphtec File from Gerber", command=main_program).grid(row=13, column=1)
+Tkinter.Button(top, width=40, text="Send Graphtec File to Silhouette Cutter", command=Send_to_Cutter).grid(row=14, column=1)
+Tkinter.Button(top, width=40, text="Save Configuration", command=Save_Configuration).grid(row=15, column=1)
+Tkinter.Button(top, width=40, text="Exit", command=Just_Exit).grid(row=16, column=1)
 
 Tkinter.Button(top, width=40, text="Create test_forces Graphtec file", command=test_forces).grid(row=17, column=1)
 
