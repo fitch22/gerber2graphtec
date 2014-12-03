@@ -353,11 +353,10 @@ else:
 Entry(top, bd =1, width=60, textvariable=cutter_shared_name_str).grid(row=11, column=1, sticky=E)
 
 Tkinter.Button(top, width=40, text="Show Gerber in Gerbv", command=show_gerber).grid(row=12, column=1)
-Tkinter.Button(top, width=40, text="Create Graphtec File from Gerber", command=main_program).grid(row=13, column=1)
+Tkinter.Button(top, width=40, text="Create Graphtec File from Input", command=main_program).grid(row=13, column=1)
 Tkinter.Button(top, width=40, text="Send Graphtec File to Silhouette Cutter", command=Send_to_Cutter).grid(row=14, column=1)
 Tkinter.Button(top, width=40, text="Save Configuration", command=Save_Configuration).grid(row=15, column=1)
 Tkinter.Button(top, width=40, text="Exit", command=Just_Exit).grid(row=16, column=1)
-
 Tkinter.Button(top, width=40, text="Create test_forces Graphtec file", command=test_forces).grid(row=17, column=1)
 
 
