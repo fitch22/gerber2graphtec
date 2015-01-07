@@ -109,14 +109,13 @@ def show_gerber():
 
   head, tail = os.path.split(Gerber_name.get())
 
-  if os.name == 'nt':
-    if not os.path.exists(gerbv_path.get()):
-      tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for gerbv is invalid.")
-      return
+  if not os.path.exists(gerbv_path.get()):
+    tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for gerbv is invalid.")
+    return
 
-    if not os.path.exists(pstoedit_path.get()):
-      tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for pstoedit is invalid.")
-      return
+  if not os.path.exists(pstoedit_path.get()):
+    tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for pstoedit is invalid.")
+    return
 
   subprocess.Popen([os.path.normpath(gerbv_path.get()), os.path.normpath(Gerber_name.get())])
 
