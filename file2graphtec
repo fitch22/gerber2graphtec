@@ -17,7 +17,8 @@ import usb1
 
 device_list = [
   (0x0b4d, 0x1121),     # Silhouette Cameo
-  (0x0b4d, 0x1123)      # Silhouette Portrait
+  (0x0b4d, 0x1123),     # Silhouette Portrait
+  (0x0b4d, 0x1132)      # Silhouette Portrait 2
 ]
 
 def open_graphtec_device(ctx):
@@ -36,7 +37,7 @@ if len(sys.argv)==2:
 elif len(sys.argv)==1:
   f = sys.stdin
 else:
-  print 'usage: file2graphtec [filename]'
+  print('usage: file2graphtec [filename]')
   sys.exit(1)
 
 endpoint = 1

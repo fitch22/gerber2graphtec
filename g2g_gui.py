@@ -1,21 +1,21 @@
 #!/usr/bin/env python
-import Tkinter
-import tkMessageBox
-import tkFileDialog
+import tkinter
+from tkinter import messagebox, filedialog
 import sys
 import os
 import string
 import subprocess
 
-from Tkinter import *
+from tkinter import *
 from os import path, access, R_OK, W_OK
 
-top = Tkinter.Tk()
+top = tkinter.Tk()
 top.title("Gerber to Graphtec")
 
 Gerber_name = StringVar()
 Output_name = StringVar()
 gerbv_path = StringVar()
+pdf2ps_path = StringVar()
 pstoedit_path  = StringVar()
 offset_str  = StringVar()
 border_str  = StringVar()
@@ -29,6 +29,7 @@ CONFPATH='./g2g_gui.cnf'
 input_filename = ''
 output_filename = ''
 gerbv_filename = ''
+pdf2ps_filename = ''
 pstoedit_filename = ''
 offset_text = ''
 border_text = ''
@@ -46,7 +47,7 @@ force = [8,30]
 cut_mode = 0
 
 def floats(s):
-  return map(float,string.split(s,','))
+  return list(map(float,str.split(s,',')))
 
 def test_forces():
 
@@ -96,7 +97,7 @@ def test_forces():
 
   if Output_name.get():
     sys.stdout = original_stdout  # restore STDOUT back to its original value
-    tkMessageBox.showinfo("G2G_GUI Message", "File '%s' created" % (Output_name.get()))
+    messagebox.showinfo("G2G_GUI Message", "File '%s' created" % (Output_name.get()))
 
 
 def show_gerber():
@@ -104,17 +105,21 @@ def show_gerber():
   if not os.path.exists(Gerber_name.get()):
     get_input_filename()
   if not os.path.exists(Gerber_name.get()):
-    tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for the input Gerber file is invalid.")
+    messagebox.showerror("G2G_GUI ERROR", "The path provided for the input Gerber file is invalid.")
     return
 
   head, tail = os.path.split(Gerber_name.get())
 
   if not os.path.exists(gerbv_path.get()):
-    tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for gerbv is invalid.")
+    messagebox.showerror("G2G_GUI ERROR", "The path provided for gerbv is invalid.")
+    return
+
+  if not os.path.exists(pdf2ps_path.get()):
+    messagebox.showerror("G2G_GUI ERROR", "The path provided for pdf2ps is invalid.")
     return
 
   if not os.path.exists(pstoedit_path.get()):
-    tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for pstoedit is invalid.")
+    messagebox.showerror("G2G_GUI ERROR", "The path provided for pstoedit is invalid.")
     return
 
   subprocess.Popen([os.path.normpath(gerbv_path.get()), os.path.normpath(Gerber_name.get())])
@@ -127,35 +132,43 @@ def main_program():
   if not os.path.exists(Gerber_name.get()):
     get_input_filename()
   if not os.path.exists(Gerber_name.get()):
-    tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for the input Gerber file is invalid.")
+    messagebox.showerror("G2G_GUI ERROR", "The path provided for the input Gerber file is invalid.")
     return
 
   head, tail = os.path.split(Gerber_name.get())
 
   if os.name=='nt':
-    temp_pdf = os.path.normpath("%s\_tmp_gerber.pdf" % (head))
-    temp_pic = os.path.normpath("%s\_tmp_gerber.pic" % (head))
-    temp_bat = os.path.normpath("%s\_tmp_gerber.bat" % (head))
+    temp_pdf = os.path.normpath("%s\\_tmp_gerber.pdf" % (head))
+    temp_ps  = os.path.normpath("%s\\_tmp_gerber.ps" % (head))
+    temp_pic = os.path.normpath("%s\\_tmp_gerber.pic" % (head))
+    temp_bat = os.path.normpath("%s\\_tmp_gerber.bat" % (head))
   else:
     temp_pdf = "_tmp_gerber.pdf"
+    temp_ps  = "_tmp_gerber.ps"
     temp_pic = "_tmp_gerber.pic"
 
   if os.name=='nt':
     if not os.path.exists(gerbv_path.get()):
-      tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for gerbv is invalid.")
+      messagebox.showerror("G2G_GUI ERROR", "The path provided for gerbv is invalid.")
+      return
+
+    if not os.path.exists(pdf2ps_path.get()):
+      messagebox.showerror("G2G_GUI ERROR", "The path provided for pdf2ps is invalid.")
       return
 
     if not os.path.exists(pstoedit_path.get()):
-      tkMessageBox.showerror("G2G_GUI ERROR", "The path provided for pstoedit is invalid.")
+      messagebox.showerror("G2G_GUI ERROR", "The path provided for pstoedit is invalid.")
       return
 
   if os.name=='nt':
-    os.system("echo \"%s\" --export=pdf --output=%s --border=0 \"%s\" > \"%s\"" % (os.path.normpath(gerbv_path.get()),temp_pdf,os.path.normpath(Gerber_name.get()),temp_bat))
-    os.system("echo \"%s\" -q -f pic \"%s\" \"%s\" >> \"%s\"" % (os.path.normpath(pstoedit_path.get()),temp_pdf,temp_pic, temp_bat))
+    os.system("echo \"%s\" --export=pdf --output=%s --border=20 \"%s\" > \"%s\"" % (os.path.normpath(gerbv_path.get()),temp_pdf,os.path.normpath(Gerber_name.get()),temp_bat))
+    os.system("echo call \"%s\" \"%s\" \"%s\" >> \"%s\"" % (os.path.normpath(pdf2ps_path.get()),temp_pdf,temp_ps,temp_bat))
+    os.system("echo \"%s\" -q -f pic \"%s\" \"%s\" >> \"%s\"" % (os.path.normpath(pstoedit_path.get()),temp_ps,temp_pic, temp_bat))
     os.system("\"%s\"" % temp_bat)
   else:
-    os.system("%s --export=pdf --output=%s --border=0 \"%s\"" % (os.path.normpath(gerbv_path.get()),temp_pdf,os.path.normpath(Gerber_name.get())))
-    os.system("%s -q -f pic \"%s\" \"%s\"" % (os.path.normpath(pstoedit_path.get()),temp_pdf,temp_pic))
+    os.system("%s --export=pdf --output=%s --border=20 \"%s\"" % (os.path.normpath(gerbv_path.get()),temp_pdf,os.path.normpath(Gerber_name.get())))
+    os.system("%s \"%s\" \"%s\"" % (os.path.normpath(pdf2ps_path.get()),temp_pdf,temp_ps))
+    os.system("%s -q -f pic \"%s\" \"%s\"" % (os.path.normpath(pstoedit_path.get()),temp_ps,temp_pic))
 
   original_stdout = sys.stdout  # keep a reference to STDOUT
 
@@ -225,13 +238,14 @@ def main_program():
 
   if Output_name.get():
     sys.stdout = original_stdout  # restore STDOUT back to its original value
-    tkMessageBox.showinfo("G2G_GUI Message", "File '%s' created"  % (Output_name.get()) )
+    messagebox.showinfo("G2G_GUI Message", "File '%s' created"  % (Output_name.get()) )
 
 def Save_Configuration():
     f = open(CONFPATH,'w')
     f.write(Gerber_name.get() + '\n')
     f.write(Output_name.get() + '\n')
     f.write(gerbv_path.get() + '\n')
+    f.write(pdf2ps_path.get() + '\n')
     f.write(pstoedit_path.get() + '\n')
     f.write(offset_str.get() + '\n')
     f.write(border_str.get() + '\n')
@@ -253,7 +267,7 @@ def Send_to_Cutter():
     src=os.path.normpath(Output_name.get())
 
     if not cutter_shared_name_str.get():
-      tkMessageBox.showerror("G2G_GUI ERROR", "The name of the cutter (as a shared printer) was not provided.")
+      messagebox.showerror("G2G_GUI ERROR", "The name of the cutter (as a shared printer) was not provided.")
       return
 
     #if not os.path.exists(cutter_shared_name_str.get()):
@@ -267,22 +281,26 @@ def Send_to_Cutter():
       os.system("cat %s > %s" % (src, dst))
 
 def get_input_filename():
-    input_filename=tkFileDialog.askopenfilename(title='Select paste mask Gerber file', filetypes=[('Gerber File', '*.g*'),("All files", "*.*")] )
+    input_filename=filedialog.askopenfilename(title='Select paste mask Gerber file', filetypes=[('Gerber File', '*.g*'),("All files", "*.*")] )
     if input_filename:
         Gerber_name.set(input_filename)
 
 def get_output_filename():
-    output_filename=tkFileDialog.asksaveasfilename(title='Select output filename', filetypes=[('Output files', '*.txt'),("All files", "*.*")] )
+    output_filename=filedialog.asksaveasfilename(title='Select output filename', filetypes=[('Output files', '*.txt'),("All files", "*.*")] )
     if output_filename:
         Output_name.set(output_filename)
 
 def get_gerbv_path():
-    gerbv_filename=tkFileDialog.askopenfilename(title='Select gerbv program', initialfile='gerbv.exe', filetypes=[('Programs', '*.exe')] )
+    gerbv_filename=filedialog.askopenfilename(title='Select gerbv program', initialfile='gerbv.exe', filetypes=[('Programs', '*.exe')] )
     if gerbv_filename:
         gerbv_path.set(gerbv_filename)
 
+def get_pdf2ps_path():
+    pdf2ps_filename=filedialog.askopenfilename(title='Select pdf2ps program', initialfile='pdf2ps.exe', filetypes=[('Programs', '*.exe')] )
+    if pdf2ps_filename:
+        pdf2ps_path.set(pdf2ps_filename)
 def get_pstoedit_path():
-    pstoedit_filename=tkFileDialog.askopenfilename(title='Select gerbv program', initialfile='pstoedit.exe', filetypes=[('Programs', '*.exe')] )
+    pstoedit_filename=filedialog.askopenfilename(title='Select pstoedit program', initialfile='pstoedit.exe', filetypes=[('Programs', '*.exe')] )
     if pstoedit_filename:
         pstoedit_path.set(pstoedit_filename)
 
@@ -306,44 +324,47 @@ def default_cut_mode_str():
 
 Label(top, text="Gerber File ").grid(row=1, column=0, sticky=W)
 Entry(top, bd =1, width=60, textvariable=Gerber_name).grid(row=1, column=1)
-Tkinter.Button(top, width=9, text = "Browse", command = get_input_filename).grid(row=1, column=2)
+tkinter.Button(top, width=9, text = "Browse", command = get_input_filename).grid(row=1, column=2)
 
 Label(top, text="Output File ").grid(row=2, column=0, sticky=W)
 Entry(top, bd =1, width=60, textvariable=Output_name).grid(row=2, column=1)
-Tkinter.Button(top, width=9, text = "Browse", command = get_output_filename).grid(row=2, column=2)
+tkinter.Button(top, width=9, text = "Browse", command = get_output_filename).grid(row=2, column=2)
 
-if os.name=='nt':
-  Label(top, text="gerbv path ").grid(row=3, column=0, sticky=W)
-  Entry(top, bd =1, width=60, textvariable=gerbv_path).grid(row=3, column=1)
-  Tkinter.Button(top, width=9, text = "Browse", command = get_gerbv_path).grid(row=3, column=2)
+Label(top, text="gerbv path ").grid(row=3, column=0, sticky=W)
+Entry(top, bd =1, width=60, textvariable=gerbv_path).grid(row=3, column=1)
+tkinter.Button(top, width=9, text = "Browse", command = get_gerbv_path).grid(row=3, column=2)
 
-  Label(top, text="pstoedit path ").grid(row=4, column=0, sticky=W)
-  Entry(top, bd =1, width=60, textvariable=pstoedit_path).grid(row=4, column=1)
-  Tkinter.Button(top, width=9, text = "Browse", command = get_pstoedit_path).grid(row=4, column=2)
+Label(top, text="pdf2ps path ").grid(row=4, column=0, sticky=W)
+Entry(top, bd =1, width=60, textvariable=pdf2ps_path).grid(row=4, column=1)
+tkinter.Button(top, width=9, text = "Browse", command = get_pdf2ps_path).grid(row=4, column=2)
 
-Label(top, text="Offset ").grid(row=5, column=0, sticky=W)
-Entry(top, bd =1, width=60, textvariable=offset_str).grid(row=5, column=1)
-Tkinter.Button(top, width=9, text = "Default", command = default_offset_str).grid(row=5, column=2)
+Label(top, text="pstoedit path ").grid(row=5, column=0, sticky=W)
+Entry(top, bd =1, width=60, textvariable=pstoedit_path).grid(row=5, column=1)
+tkinter.Button(top, width=9, text = "Browse", command = get_pstoedit_path).grid(row=5, column=2)
 
-Label(top, text="Border ").grid(row=6, column=0, sticky=W)
-Entry(top, bd =1, width=60, textvariable=border_str).grid(row=6, column=1)
-Tkinter.Button(top, width=9, text = "Default", command = default_border_str).grid(row=6, column=2)
+Label(top, text="Offset ").grid(row=6, column=0, sticky=W)
+Entry(top, bd =1, width=60, textvariable=offset_str).grid(row=6, column=1)
+tkinter.Button(top, width=9, text = "Default", command = default_offset_str).grid(row=6, column=2)
 
-Label(top, text="Matrix ").grid(row=7, column=0, sticky=W)
-Entry(top, bd =1, width=60, textvariable=matrix_str).grid(row=7, column=1)
-Tkinter.Button(top, width=9, text = "Default", command = default_matrix_str).grid(row=7, column=2)
+Label(top, text="Border ").grid(row=7, column=0, sticky=W)
+Entry(top, bd =1, width=60, textvariable=border_str).grid(row=7, column=1)
+tkinter.Button(top, width=9, text = "Default", command = default_border_str).grid(row=7, column=2)
 
-Label(top, text="Speed ").grid(row=8, column=0, sticky=W)
-Entry(top, bd =1, width=60, textvariable=speed_str).grid(row=8, column=1)
-Tkinter.Button(top, width=9, text = "Default", command = default_speed_str).grid(row=8, column=2)
+Label(top, text="Matrix ").grid(row=8, column=0, sticky=W)
+Entry(top, bd =1, width=60, textvariable=matrix_str).grid(row=8, column=1)
+tkinter.Button(top, width=9, text = "Default", command = default_matrix_str).grid(row=8, column=2)
 
-Label(top, text="Force ").grid(row=9, column=0, sticky=W)
-Entry(top, bd =1, width=60, textvariable=force_str).grid(row=9, column=1)
-Tkinter.Button(top, width=9, text = "Default", command = default_force_str).grid(row=9, column=2)
+Label(top, text="Speed ").grid(row=9, column=0, sticky=W)
+Entry(top, bd =1, width=60, textvariable=speed_str).grid(row=9, column=1)
+tkinter.Button(top, width=9, text = "Default", command = default_speed_str).grid(row=9, column=2)
 
-Label(top, text="Cut Mode ").grid(row=10, column=0, sticky=W)
-Entry(top, bd =1, width=60, textvariable=cut_mode_str).grid(row=10, column=1)
-Tkinter.Button(top, width=9, text = "Default", command = default_cut_mode_str).grid(row=10, column=2)
+Label(top, text="Force ").grid(row=10, column=0, sticky=W)
+Entry(top, bd =1, width=60, textvariable=force_str).grid(row=10, column=1)
+tkinter.Button(top, width=9, text = "Default", command = default_force_str).grid(row=10, column=2)
+
+Label(top, text="Cut Mode ").grid(row=11, column=0, sticky=W)
+Entry(top, bd =1, width=60, textvariable=cut_mode_str).grid(row=11, column=1)
+tkinter.Button(top, width=9, text = "Default", command = default_cut_mode_str).grid(row=11, column=2)
 
 if os.name=='nt':
   Label(top, text="Cutter Shared Name").grid(row=11, column=0, sticky=W)
@@ -351,12 +372,12 @@ else:
   Label(top, text="Cutter Device Name").grid(row=11, column=0, sticky=W)
 Entry(top, bd =1, width=60, textvariable=cutter_shared_name_str).grid(row=11, column=1, sticky=E)
 
-Tkinter.Button(top, width=40, text="Show Gerber in Gerbv", command=show_gerber).grid(row=12, column=1)
-Tkinter.Button(top, width=40, text="Create Graphtec File from Input", command=main_program).grid(row=13, column=1)
-Tkinter.Button(top, width=40, text="Send Graphtec File to Silhouette Cutter", command=Send_to_Cutter).grid(row=14, column=1)
-Tkinter.Button(top, width=40, text="Save Configuration", command=Save_Configuration).grid(row=15, column=1)
-Tkinter.Button(top, width=40, text="Exit", command=Just_Exit).grid(row=16, column=1)
-Tkinter.Button(top, width=40, text="Create test_forces Graphtec file", command=test_forces).grid(row=17, column=1)
+tkinter.Button(top, width=40, text="Show Gerber in Gerbv", command=show_gerber).grid(row=12, column=1)
+tkinter.Button(top, width=40, text="Create Graphtec File from Input", command=main_program).grid(row=13, column=1)
+tkinter.Button(top, width=40, text="Send Graphtec File to Silhouette Cutter", command=Send_to_Cutter).grid(row=14, column=1)
+tkinter.Button(top, width=40, text="Save Configuration", command=Save_Configuration).grid(row=15, column=1)
+tkinter.Button(top, width=40, text="Exit", command=Just_Exit).grid(row=16, column=1)
+tkinter.Button(top, width=40, text="Create test_forces Graphtec file", command=test_forces).grid(row=17, column=1)
 
 
 if path.isfile(CONFPATH) and access(CONFPATH, R_OK):
@@ -367,6 +388,8 @@ if path.isfile(CONFPATH) and access(CONFPATH, R_OK):
     output_filename = output_filename.strip()
     gerbv_filename = f.readline()
     gerbv_filename = gerbv_filename.strip()
+    pdf2ps_filename = f.readline()
+    pdf2ps_filename = pdf2ps_filename.strip()
     pstoedit_filename = f.readline()
     pstoedit_filename = pstoedit_filename.strip()
     offset_text =  f.readline()
@@ -393,12 +416,17 @@ if not gerbv_filename:
     if os.name=='nt':
         gerbv_filename="C:/Program Files (x86)/gerbv-2.6.0/bin/gerbv.exe"
     else:
-        gerbv_filename="gerbv"
+        gerbv_filename="/usr/bin/gerbv"
+if not pdf2ps_filename:
+    if os.name=='nt':
+        pdf2ps_filename="C:/Program Files/gs/gs10.03.1/lib/pdf2ps.bat"
+    else:
+        pdf2ps_filename="/usr/bin/pdf2ps"
 if not pstoedit_filename:
     if os.name=='nt':
         pstoedit_filename="C:/Program Files/pstoedit/pstoedit.exe"
     else:
-        pstoedit_filename="pstoedit"
+        pstoedit_filename="/usr/bin/pstoedit"
 if not offset_text:
     offset_text="4.0,0.5"
 if not border_text:
@@ -420,6 +448,7 @@ if not cutter_shared_name_text:
 Gerber_name.set(input_filename)
 Output_name.set(output_filename)
 gerbv_path.set(gerbv_filename)
+pdf2ps_path.set(pdf2ps_filename)
 pstoedit_path.set(pstoedit_filename)
 offset_str.set(offset_text)
 border_str.set(border_text)
